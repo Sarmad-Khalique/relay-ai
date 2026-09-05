@@ -35,7 +35,19 @@ from child environments. Pay-as-you-go fallback is disabled.
 > The complete live provider workflow was verified on macOS with account-authenticated Codex CLI 0.153.4
 > and Cursor Agent 2026.09.02-c22c1a3. See the [compatibility record](docs/compatibility.md).
 
-## Install from source
+## Install
+
+Install the public alpha from npm:
+
+```bash
+npm install --global @provenway/cli@alpha
+provenway --version
+```
+
+Alpha releases may change before v1. To pin this release exactly, install
+`@provenway/cli@0.1.0-alpha.1`.
+
+### Install from source
 
 ```bash
 git clone https://github.com/ProvenWay/provenway.git
@@ -46,9 +58,6 @@ pnpm build
 pnpm link --global
 provenway --version
 ```
-
-The package is prepared as `@provenway/cli@0.1.0-alpha.1`; the `provenway` npm organization must exist and be
-controlled by the publisher before the first registry release.
 
 ## Quick start
 

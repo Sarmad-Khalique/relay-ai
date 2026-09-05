@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { chmod, mkdir, open, type FileHandle } from "node:fs/promises";
 import path from "node:path";
-import { EXIT_CODES, RelayError } from "./errors.js";
+import { EXIT_CODES, ProvenWayError } from "./errors.js";
 import { redact, secretValuesFromEnvironment } from "./redaction.js";
 
 export interface ProcessRequest {
@@ -177,7 +177,7 @@ export async function runProcess(request: ProcessRequest): Promise<ProcessResult
       : new Error(typeof streamError === "string" ? streamError : JSON.stringify(streamError));
   }
   if (executionState.overflowed) {
-    throw new RelayError(
+    throw new ProvenWayError(
       `Process logs exceeded ${request.maxLogBytes} bytes`,
       EXIT_CODES.provider,
       "LOG_LIMIT_EXCEEDED",

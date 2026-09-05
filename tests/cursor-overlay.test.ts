@@ -11,7 +11,7 @@ afterEach(async () =>
 
 describe("Cursor permission overlay", () => {
   it("tightens and restores an existing file byte-for-byte", async () => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "relay-overlay-"));
+    const root = await mkdtemp(path.join(os.tmpdir(), "provenway-overlay-"));
     temporary.push(root);
     const worktree = path.join(root, "worktree");
     const runDirectory = path.join(root, "run");
@@ -30,8 +30,8 @@ describe("Cursor permission overlay", () => {
     expect((await lstat(path.join(worktree, ".cursor", "cli.json"))).mode & 0o777).toBe(0o640);
   });
 
-  it("removes a Relay-created overlay", async () => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "relay-overlay-"));
+  it("removes a ProvenWay-created overlay", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "provenway-overlay-"));
     temporary.push(root);
     const worktree = path.join(root, "worktree");
     await mkdir(worktree);

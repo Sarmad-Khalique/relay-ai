@@ -29,7 +29,7 @@ describe("workflow engine", () => {
       task: "Add a fixture feature",
     });
     expect(outcome.run.status).toBe("accepted");
-    expect(outcome.run.branch).toMatch(/^relay\//);
+    expect(outcome.run.branch).toMatch(/^provenway\//);
     expect(await git(fixture.repository, ["status", "--porcelain"])).toBe("");
     await expect(access(path.join(fixture.repository, "feature.txt"))).rejects.toMatchObject({
       code: "ENOENT",
@@ -154,7 +154,7 @@ async function setupFixture(
     verificationFails?: boolean;
   } = {},
 ) {
-  const root = await mkdtemp(path.join(os.tmpdir(), "relay-workflow-"));
+  const root = await mkdtemp(path.join(os.tmpdir(), "provenway-workflow-"));
   temporary.push(root);
   const repository = await createGitRepository(root);
   const paths = testPaths(root);

@@ -1,5 +1,5 @@
 import { minimatch } from "minimatch";
-import { EXIT_CODES, RelayError } from "./errors.js";
+import { EXIT_CODES, ProvenWayError } from "./errors.js";
 
 export const BUILTIN_FORBIDDEN_PATHS = [
   "**/.env*",
@@ -45,7 +45,7 @@ export function assertNoForbiddenPaths(
 ): void {
   const forbidden = findForbiddenPaths(paths, patterns);
   if (forbidden.length > 0) {
-    throw new RelayError(
+    throw new ProvenWayError(
       `Provider modified forbidden paths: ${forbidden.join(", ")}`,
       EXIT_CODES.provider,
       "FORBIDDEN_PATH_MODIFIED",

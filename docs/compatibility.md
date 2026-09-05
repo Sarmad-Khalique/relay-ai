@@ -1,6 +1,6 @@
 # Provider compatibility
 
-Relay records provider versions in each run manifest. This maintainer matrix documents release-level
+ProvenWay records provider versions in each run manifest. This maintainer matrix documents release-level
 validation without storing credentials or provider output.
 
 | Date       | Platform                 | Codex CLI | Architect/reviewer | Cursor Agent       | Implementer  | Result |
@@ -10,4 +10,4 @@ validation without storing credentials or provider output.
 
 The live test created a temporary Git repository, completed planning, implementation, deterministic
 verification, and review, and left the source checkout unchanged. Compatibility with other provider
-versions is checked defensively through `relay doctor --deep` and version-labelled JSONL fixtures.
+versions is checked defensively through `provenway doctor --deep` and version-labelled JSONL fixtures.

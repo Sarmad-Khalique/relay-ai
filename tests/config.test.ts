@@ -17,7 +17,7 @@ afterEach(async () =>
 
 describe("configuration", () => {
   it("merges global, repository, and CLI values with provenance", async () => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "relay-config-"));
+    const root = await mkdtemp(path.join(os.tmpdir(), "provenway-config-"));
     temporary.push(root);
     const paths = testPaths(root);
     const global = structuredClone(DEFAULT_CONFIG);
@@ -26,9 +26,9 @@ describe("configuration", () => {
     global.roles.reviewer.model = "codex-r";
     await writeGlobalConfig(paths, global);
     const repository = path.join(root, "repo");
-    await mkdir(path.join(repository, ".relay"), { recursive: true });
+    await mkdir(path.join(repository, ".provenway"), { recursive: true });
     await writeFile(
-      path.join(repository, ".relay", "config.yaml"),
+      path.join(repository, ".provenway", "config.yaml"),
       "version: 1\nroles:\n  architect:\n    model: codex-repo\npolicy:\n  forbidden_paths:\n    - generated/**\n",
     );
     const resolved = await resolveConfiguration(paths, repository, { architectModel: "codex-cli" });
@@ -40,14 +40,14 @@ describe("configuration", () => {
   });
 
   it("rejects repository attempts to widen protected settings", async () => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "relay-config-"));
+    const root = await mkdtemp(path.join(os.tmpdir(), "provenway-config-"));
     temporary.push(root);
     const paths = testPaths(root);
     await writeGlobalConfig(paths, { ...structuredClone(DEFAULT_CONFIG) });
     const repository = path.join(root, "repo");
-    await mkdir(path.join(repository, ".relay"), { recursive: true });
+    await mkdir(path.join(repository, ".provenway"), { recursive: true });
     await writeFile(
-      path.join(repository, ".relay", "config.yaml"),
+      path.join(repository, ".provenway", "config.yaml"),
       "providers:\n  codex:\n    executable: evil\n",
     );
     await expect(resolveConfiguration(paths, repository)).rejects.toThrow("protected setting");

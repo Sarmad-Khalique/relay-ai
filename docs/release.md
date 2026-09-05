@@ -1,8 +1,8 @@
 # Manual release checklist
 
-Relay deliberately has no hosted release workflow in v0.1.
+ProvenWay deliberately has no hosted release workflow in v0.1.
 
-1. Confirm the `relay-ai` npm organization exists and the maintainer has publish rights.
+1. Confirm the `provenway` npm organization exists and the maintainer has publish rights.
 2. Run `pnpm release:check` on macOS.
 3. Run `pnpm test:linux` with a working Docker daemon.
 4. If provider allowance is available, run the opt-in live Codex and Cursor smoke tests in generated toy

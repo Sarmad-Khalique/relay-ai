@@ -1,6 +1,6 @@
 # Cursor adapter
 
-Relay resolves the configured executable, then `agent`, then `cursor-agent`. Required capabilities are
+ProvenWay resolves the configured executable, then `agent`, then `cursor-agent`. Required capabilities are
 browser/account status, explicit model selection, print mode, `stream-json`, resume IDs, workspace
 selection, and enabled sandboxing.
 
@@ -12,7 +12,7 @@ agent status --format json
 agent models
 ```
 
-Before each write turn Relay backs up `.cursor/cli.json`, merges only additional deny permissions, runs the
+Before each write turn ProvenWay backs up `.cursor/cli.json`, merges only additional deny permissions, runs the
 provider, and restores the exact original bytes and mode. Denies cover the overlay itself, Git internals,
 secret paths, configured forbidden paths, destructive/remote Git and shell operations, and web fetches.
 Git remains authoritative for the final changed-path list.

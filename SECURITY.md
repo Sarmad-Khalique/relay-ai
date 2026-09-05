@@ -11,11 +11,11 @@ response-time SLA is promised during the public alpha.
 
 ## Security boundary
 
-Relay coordinates official local CLIs that run as the current operating-system user. It is not a hardened
+ProvenWay coordinates official local CLIs that run as the current operating-system user. It is not a hardened
 container boundary and cannot prove that a provider with host-level access made no changes outside the
 managed worktree.
 
-Relay does:
+ProvenWay does:
 
 - invoke providers with argument arrays rather than an interpolated shell;
 - keep architect and reviewer stages read-only;
@@ -28,7 +28,7 @@ Relay does:
 - redact logs before persistence and use restrictive file modes;
 - require explicit confirmation for writes and destructive cleanup.
 
-Relay does not read, copy, refresh, proxy, or reinterpret provider credential files. It does not guarantee
+ProvenWay does not read, copy, refresh, proxy, or reinterpret provider credential files. It does not guarantee
 perfect secret detection, prevent every side effect of a provider-native tool, or make untrusted repository
 code safe to execute. Review proposed verification commands before confirming a run.
 

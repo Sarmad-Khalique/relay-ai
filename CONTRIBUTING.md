@@ -1,10 +1,10 @@
-# Contributing to Relay
+# Contributing to ProvenWay
 
 Thank you for helping make local AI coding workflows safer and easier to inspect.
 
 ## Before opening a change
 
-For bugs, include the Relay version, operating system, provider CLI versions, the terminal run status, and
+For bugs, include the ProvenWay version, operating system, provider CLI versions, the terminal run status, and
 a minimal reproduction. Remove proprietary source, prompts, usernames, home-directory paths, session IDs,
 and tokens from diagnostics. Report security issues privately as described in `SECURITY.md`.
 
@@ -22,7 +22,7 @@ pnpm check
 ```
 
 Tests must not invoke a real provider unless their file is under `tests/live` and protected by the matching
-`RELAY_LIVE_*` environment variable. Use temporary Git repositories and fake executables for normal tests.
+`PROVENWAY_LIVE_*` environment variable. Use temporary Git repositories and fake executables for normal tests.
 
 ## Pull requests
 

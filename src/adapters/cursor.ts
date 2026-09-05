@@ -9,7 +9,7 @@ import type {
   ProbeContext,
   ProviderCapabilities,
 } from "../adapter-contract.js";
-import { EXIT_CODES, RelayError } from "../errors.js";
+import { EXIT_CODES, ProvenWayError } from "../errors.js";
 import { captureCommand, resolveExecutable } from "../executable.js";
 import { sanitizedProviderEnvironment } from "../redaction.js";
 import { runProcess } from "../subprocess.js";
@@ -85,7 +85,7 @@ export class CursorAdapter implements HarnessAdapter {
       this.executable ??
       (await resolveExecutable(this.configuredExecutable, ["agent", "cursor-agent"]));
     if (!executable) {
-      throw new RelayError(
+      throw new ProvenWayError(
         "Cursor Agent CLI was not found",
         EXIT_CODES.environment,
         "CURSOR_NOT_FOUND",
@@ -127,7 +127,7 @@ export class CursorAdapter implements HarnessAdapter {
       onStdoutLine: async (line) => {
         if (!line.trim()) return;
         if (Buffer.byteLength(line) > request.maxEventBytes) {
-          throw new RelayError(
+          throw new ProvenWayError(
             "Cursor emitted an oversized JSONL event",
             EXIT_CODES.provider,
             "EVENT_LIMIT_EXCEEDED",
@@ -154,11 +154,11 @@ export class CursorAdapter implements HarnessAdapter {
       },
     });
     if (result.cancelled)
-      throw new RelayError("Cursor run cancelled", EXIT_CODES.cancelled, "CANCELLED");
+      throw new ProvenWayError("Cursor run cancelled", EXIT_CODES.cancelled, "CANCELLED");
     if (result.timedOut)
-      throw new RelayError("Cursor run timed out", EXIT_CODES.provider, "PROVIDER_TIMEOUT");
+      throw new ProvenWayError("Cursor run timed out", EXIT_CODES.provider, "PROVIDER_TIMEOUT");
     if (!request.config.policy.allow_payg && reportedApiSource && reportedApiSource !== "login") {
-      throw new RelayError(
+      throw new ProvenWayError(
         `Cursor reported usage-based authentication source: ${reportedApiSource}`,
         EXIT_CODES.environment,
         "PAYG_AUTH_BLOCKED",
@@ -236,18 +236,22 @@ export function parseCursorModels(value: string): string[] {
     .filter(Boolean);
 }
 
-function providerFailure(stderr: string): RelayError {
+function providerFailure(stderr: string): ProvenWayError {
   if (/quota|rate.?limit|usage.?limit/i.test(stderr)) {
-    return new RelayError(
+    return new ProvenWayError(
       "Cursor quota or rate limit reached",
       EXIT_CODES.awaitingUser,
       "PROVIDER_QUOTA",
     );
   }
   if (/auth|login|unauthorized|forbidden/i.test(stderr)) {
-    return new RelayError("Cursor is not authenticated", EXIT_CODES.environment, "PROVIDER_AUTH");
+    return new ProvenWayError(
+      "Cursor is not authenticated",
+      EXIT_CODES.environment,
+      "PROVIDER_AUTH",
+    );
   }
-  return new RelayError(
+  return new ProvenWayError(
     `Cursor exited unsuccessfully: ${stderr.trim() || "no error text"}`,
     EXIT_CODES.provider,
     "PROVIDER_FAILED",

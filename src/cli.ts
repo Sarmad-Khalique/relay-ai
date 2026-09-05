@@ -6,14 +6,14 @@ import { CodexAdapter } from "./adapters/codex.js";
 import { CursorAdapter } from "./adapters/cursor.js";
 import { resolveConfiguration, type ConfigOverrides } from "./config.js";
 import { runDoctor } from "./doctor.js";
-import { EXIT_CODES, RelayError, asRelayError } from "./errors.js";
+import { EXIT_CODES, ProvenWayError, asProvenWayError } from "./errors.js";
 import { deleteBranch, isRegisteredWorktree, removeManagedWorktree } from "./git.js";
-import { ensureRelayPaths, isPathInside, resolveRelayPaths } from "./paths.js";
+import { ensureProvenWayPaths, isPathInside, resolveProvenWayPaths } from "./paths.js";
 import { cancelLockedRun } from "./repo-lock.js";
 import { initializeConfiguration } from "./setup.js";
 import { isTerminal, type RunStatus } from "./state-machine.js";
 import { RunStore, type RunRecord } from "./store.js";
-import { ConsoleUi, type RelayUi } from "./ui.js";
+import { ConsoleUi, type ProvenWayUi } from "./ui.js";
 import { WorkflowEngine, type WorkflowOutcome } from "./workflow.js";
 
 interface RunCommandOptions {
@@ -24,19 +24,19 @@ interface RunCommandOptions {
   keepWorktree?: "always" | "on_failure" | "never";
 }
 
-export function buildProgram(ui: RelayUi = new ConsoleUi()): Command {
+export function buildProgram(ui: ProvenWayUi = new ConsoleUi()): Command {
   const program = new Command()
-    .name("relay")
+    .name("provenway")
     .description("Deterministic local orchestration for authenticated AI coding CLIs")
     .version(packageJson.version)
     .showHelpAfterError();
 
   program
     .command("init")
-    .description("Create or update Relay's global configuration")
+    .description("Create or update ProvenWay's global configuration")
     .action(async () => {
-      const paths = resolveRelayPaths();
-      await ensureRelayPaths(paths);
+      const paths = resolveProvenWayPaths();
+      await ensureProvenWayPaths(paths);
       await initializeConfiguration(paths, ui, process.cwd());
     });
 
@@ -45,7 +45,7 @@ export function buildProgram(ui: RelayUi = new ConsoleUi()): Command {
     .description("Check providers, authentication, models, Git, and local storage")
     .option("--deep", "also discover models and inspect optional capabilities")
     .action(async (options: { deep?: boolean }) => {
-      const paths = resolveRelayPaths();
+      const paths = resolveProvenWayPaths();
       const result = await runDoctor(paths, ui, process.cwd(), Boolean(options.deep));
       if (!result.healthy) process.exitCode = EXIT_CODES.environment;
     });
@@ -77,7 +77,7 @@ export function buildProgram(ui: RelayUi = new ConsoleUi()): Command {
         if (runId) renderRun(ui, store.requireRun(runId));
         else {
           const runs = store.listRuns();
-          if (!runs.length) ui.info("No Relay runs found.");
+          if (!runs.length) ui.info("No ProvenWay runs found.");
           for (const run of runs) renderRun(ui, run);
         }
       });
@@ -116,7 +116,7 @@ export function buildProgram(ui: RelayUi = new ConsoleUi()): Command {
         const artifact = store
           .artifacts(runId)
           .find((candidate) => candidate.name === "diff.patch");
-        if (!artifact) throw new RelayError("No diff exists for this run", 2, "DIFF_NOT_FOUND");
+        if (!artifact) throw new ProvenWayError("No diff exists for this run", 2, "DIFF_NOT_FOUND");
         process.stdout.write(await readFile(artifact.path, "utf8"));
       });
     });
@@ -152,11 +152,15 @@ export function buildProgram(ui: RelayUi = new ConsoleUi()): Command {
       await withStore(async (store, paths) => {
         const run = store.requireRun(runId);
         if (isTerminal(run.status)) {
-          throw new RelayError(`Run is already terminal: ${run.status}`, 2, "RUN_ALREADY_TERMINAL");
+          throw new ProvenWayError(
+            `Run is already terminal: ${run.status}`,
+            2,
+            "RUN_ALREADY_TERMINAL",
+          );
         }
         const signalled = await cancelLockedRun(paths.locksDir, run.repositoryRoot, runId);
         if (!signalled) {
-          store.forceInterrupted(runId, "cancel found no live Relay process");
+          store.forceInterrupted(runId, "cancel found no live ProvenWay process");
           ui.warn("No live process was found; the run was marked interrupted.");
         } else ui.success("Cancellation signal sent.");
       });
@@ -166,7 +170,7 @@ export function buildProgram(ui: RelayUi = new ConsoleUi()): Command {
     .command("clean")
     .description("Remove a managed worktree and optionally its branch")
     .argument("<run>", "run ID")
-    .option("--delete-branch", "also offer to delete the Relay branch")
+    .option("--delete-branch", "also offer to delete the ProvenWay branch")
     .action(async (runId: string, options: { deleteBranch?: boolean }) => {
       await withStore(async (store, paths) => {
         const run = store.requireRun(runId);
@@ -177,7 +181,7 @@ export function buildProgram(ui: RelayUi = new ConsoleUi()): Command {
               `Remove managed worktree ${run.worktree}? Uncommitted files there will be discarded.`,
               false,
             );
-            if (!confirmed) throw new RelayError("Cleanup cancelled", 130, "CANCELLED");
+            if (!confirmed) throw new ProvenWayError("Cleanup cancelled", 130, "CANCELLED");
             await removeManagedWorktree(run.repositoryRoot, run.worktree, true);
           }
           store.clearWorktree(runId);
@@ -186,13 +190,13 @@ export function buildProgram(ui: RelayUi = new ConsoleUi()): Command {
 
         if (options.deleteBranch && run.branch) {
           const confirmed = await ui.confirm(
-            `Delete branch ${run.branch}? This is separate and cannot be undone by Relay.`,
+            `Delete branch ${run.branch}? This is separate and cannot be undone by ProvenWay.`,
             false,
           );
-          if (!confirmed) throw new RelayError("Branch deletion cancelled", 130, "CANCELLED");
+          if (!confirmed) throw new ProvenWayError("Branch deletion cancelled", 130, "CANCELLED");
           await deleteBranch(run.repositoryRoot, run.branch);
           store.clearBranch(runId);
-          ui.success("Relay branch deleted.");
+          ui.success("ProvenWay branch deleted.");
         }
       });
     });
@@ -205,11 +209,15 @@ export function buildProgram(ui: RelayUi = new ConsoleUi()): Command {
       await withStore(async (store, paths) => {
         const run = store.requireRun(runId);
         if (!isTerminal(run.status)) {
-          throw new RelayError("Clean or finish the run before deleting it", 2, "RUN_NOT_TERMINAL");
+          throw new ProvenWayError(
+            "Clean or finish the run before deleting it",
+            2,
+            "RUN_NOT_TERMINAL",
+          );
         }
         if (run.worktree && (await isRegisteredWorktree(run.repositoryRoot, run.worktree))) {
-          throw new RelayError(
-            "Remove the managed worktree with relay clean before deleting this run",
+          throw new ProvenWayError(
+            "Remove the managed worktree with provenway clean before deleting this run",
             2,
             "WORKTREE_STILL_REGISTERED",
           );
@@ -218,10 +226,14 @@ export function buildProgram(ui: RelayUi = new ConsoleUi()): Command {
           `Permanently delete run ${runId} and its artifacts? This cannot be undone.`,
           false,
         );
-        if (!confirmed) throw new RelayError("Deletion cancelled", 130, "CANCELLED");
+        if (!confirmed) throw new ProvenWayError("Deletion cancelled", 130, "CANCELLED");
         const runDirectory = path.join(paths.runsDir, runId);
         if (!isPathInside(paths.runsDir, runDirectory)) {
-          throw new RelayError("Run artifact path escaped managed storage", 4, "RUN_PATH_ESCAPE");
+          throw new ProvenWayError(
+            "Run artifact path escaped managed storage",
+            4,
+            "RUN_PATH_ESCAPE",
+          );
         }
         await rm(runDirectory, { recursive: true, force: true });
         store.deleteRun(runId);
@@ -229,12 +241,12 @@ export function buildProgram(ui: RelayUi = new ConsoleUi()): Command {
       });
     });
 
-  const config = program.command("config").description("Inspect Relay configuration");
+  const config = program.command("config").description("Inspect ProvenWay configuration");
   config
     .command("explain")
     .description("Show resolved configuration values and provenance")
     .action(async () => {
-      const paths = resolveRelayPaths();
+      const paths = resolveProvenWayPaths();
       let repositoryRoot: string | undefined;
       try {
         const { inspectRepository } = await import("./git.js");
@@ -253,21 +265,21 @@ export function buildProgram(ui: RelayUi = new ConsoleUi()): Command {
 
 export async function runCli(
   argv: string[] = process.argv,
-  ui: RelayUi = new ConsoleUi(),
+  ui: ProvenWayUi = new ConsoleUi(),
 ): Promise<number> {
   process.exitCode = 0;
   try {
     await buildProgram(ui).parseAsync(argv);
   } catch (error) {
-    const relayError = asRelayError(error);
-    ui.error(`${relayError.message} (${relayError.code})`);
-    process.exitCode = relayError.exitCode;
+    const provenwayError = asProvenWayError(error);
+    ui.error(`${provenwayError.message} (${provenwayError.code})`);
+    process.exitCode = provenwayError.exitCode;
   }
   return process.exitCode;
 }
 
 async function executeWorkflow(
-  ui: RelayUi,
+  ui: ProvenWayUi,
   task: string,
   options: RunCommandOptions,
   planOnly: boolean,
@@ -324,16 +336,20 @@ function toOverrides(options: RunCommandOptions): ConfigOverrides {
 function parseRepairAttempts(value: string): number {
   const parsed = Number.parseInt(value, 10);
   if (!Number.isInteger(parsed) || parsed < 0 || parsed > 2) {
-    throw new RelayError("Repair attempts must be between 0 and 2", 2, "INVALID_REPAIR_ATTEMPTS");
+    throw new ProvenWayError(
+      "Repair attempts must be between 0 and 2",
+      2,
+      "INVALID_REPAIR_ATTEMPTS",
+    );
   }
   return parsed;
 }
 
 async function withStore<T>(
-  callback: (store: RunStore, paths: ReturnType<typeof resolveRelayPaths>) => T | Promise<T>,
+  callback: (store: RunStore, paths: ReturnType<typeof resolveProvenWayPaths>) => T | Promise<T>,
 ): Promise<T> {
-  const paths = resolveRelayPaths();
-  await ensureRelayPaths(paths);
+  const paths = resolveProvenWayPaths();
+  await ensureProvenWayPaths(paths);
   const store = await RunStore.open(paths.databaseFile);
   try {
     return await callback(store, paths);
@@ -342,7 +358,7 @@ async function withStore<T>(
   }
 }
 
-function renderOutcome(ui: RelayUi, outcome: WorkflowOutcome): void {
+function renderOutcome(ui: ProvenWayUi, outcome: WorkflowOutcome): void {
   const { run } = outcome;
   const requiredCommands =
     outcome.verification?.commands.filter((command) => command.required) ?? [];
@@ -358,12 +374,12 @@ function renderOutcome(ui: RelayUi, outcome: WorkflowOutcome): void {
       `Review: ${outcome.review.findings.filter((item) => item.severity === "blocking").length} blocking findings`,
     );
   }
-  ui.info(`Artifacts: ${path.join(resolveRelayPaths().runsDir, run.runId)}`);
+  ui.info(`Artifacts: ${path.join(resolveProvenWayPaths().runsDir, run.runId)}`);
   if (["accepted", "accepted_no_change", "planned"].includes(run.status)) ui.success(run.status);
   else ui.warn(run.status);
 }
 
-function renderRun(ui: RelayUi, run: RunRecord): void {
+function renderRun(ui: ProvenWayUi, run: RunRecord): void {
   ui.info(
     [
       run.runId,

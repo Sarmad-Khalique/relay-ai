@@ -19,15 +19,15 @@ import {
 } from "./artifacts.js";
 import {
   assertConfiguredModels,
-  relayConfigSchema,
+  provenwayConfigSchema,
   resolveConfiguration,
   type ConfigOverrides,
-  type RelayConfig,
+  type ProvenWayConfig,
   type ResolvedConfig,
   type VerificationCommand,
 } from "./config.js";
 import { applyCursorOverlay, restoreCursorOverlay } from "./cursor-overlay.js";
-import { EXIT_CODES, RelayError, asRelayError } from "./errors.js";
+import { EXIT_CODES, ProvenWayError, asProvenWayError } from "./errors.js";
 import {
   commitWorktree,
   createManagedWorktree,
@@ -39,7 +39,7 @@ import {
   worktreeDiff,
   type RepositoryInfo,
 } from "./git.js";
-import type { RelayPaths } from "./paths.js";
+import type { ProvenWayPaths } from "./paths.js";
 import { assertNoForbiddenPaths } from "./policy.js";
 import {
   implementationPrompt,
@@ -61,7 +61,7 @@ import {
 } from "./schemas.js";
 import { canTransition, isTerminal, type RunStatus } from "./state-machine.js";
 import { RunStore, type RunRecord } from "./store.js";
-import type { RelayUi } from "./ui.js";
+import type { ProvenWayUi } from "./ui.js";
 import {
   describeNetworkEnforcement,
   discoverVerificationCommands,
@@ -91,10 +91,10 @@ export interface WorkflowOutcome {
 
 export class WorkflowEngine {
   constructor(
-    private readonly paths: RelayPaths,
+    private readonly paths: ProvenWayPaths,
     private readonly store: RunStore,
     private readonly adapters: WorkflowAdapters,
-    private readonly ui: RelayUi,
+    private readonly ui: ProvenWayUi,
   ) {}
 
   async execute(options: ExecuteOptions): Promise<WorkflowOutcome> {
@@ -102,7 +102,7 @@ export class WorkflowEngine {
     const resolved = await resolveConfiguration(this.paths, repository.root, options.overrides);
     assertConfiguredModels(resolved.config);
     if (resolved.config.workflow.require_clean_worktree && !repository.clean) {
-      throw new RelayError(
+      throw new ProvenWayError(
         `Source checkout is not clean:\n${repository.status}`,
         EXIT_CODES.invalidInput,
         "DIRTY_SOURCE_CHECKOUT",
@@ -115,7 +115,7 @@ export class WorkflowEngine {
     try {
       const otherActive = this.store.findActiveByRepository(repository.root);
       if (otherActive.length > 0) {
-        throw new RelayError(
+        throw new ProvenWayError(
           `Repository already has an unfinished run: ${otherActive[0]?.runId ?? "unknown"}`,
           EXIT_CODES.awaitingUser,
           "UNFINISHED_RUN_EXISTS",
@@ -214,7 +214,7 @@ export class WorkflowEngine {
       });
     } catch (error) {
       await this.recordFailure(runId, error);
-      throw asRelayError(error);
+      throw asProvenWayError(error);
     } finally {
       await lock.release();
     }
@@ -223,15 +223,15 @@ export class WorkflowEngine {
   async resume(runId: string, signal?: AbortSignal): Promise<WorkflowOutcome> {
     let run = this.store.requireRun(runId);
     if (isTerminal(run.status) && run.status !== "implemented_unreviewed") {
-      throw new RelayError(
+      throw new ProvenWayError(
         `Run ${runId} is already terminal: ${run.status}`,
         EXIT_CODES.invalidInput,
         "RUN_ALREADY_TERMINAL",
       );
     }
-    const parsedConfig = relayConfigSchema.safeParse(run.configuration);
+    const parsedConfig = provenwayConfigSchema.safeParse(run.configuration);
     if (!parsedConfig.success) {
-      throw new RelayError(
+      throw new ProvenWayError(
         "Stored run configuration is invalid",
         EXIT_CODES.invalidInput,
         "INVALID_STORED_CONFIG",
@@ -281,8 +281,8 @@ export class WorkflowEngine {
 
       if (run.worktree) {
         if (!(await isRegisteredWorktree(run.repositoryRoot, run.worktree))) {
-          throw new RelayError(
-            "Stored worktree is no longer registered; Relay will not repeat the writer",
+          throw new ProvenWayError(
+            "Stored worktree is no longer registered; ProvenWay will not repeat the writer",
             EXIT_CODES.awaitingUser,
             "WORKTREE_MISSING",
           );
@@ -290,8 +290,8 @@ export class WorkflowEngine {
         await restoreCursorOverlay(run.worktree, runDirectory);
         const changes = await gitChanges(run.worktree);
         if (changes.all.length === 0) {
-          throw new RelayError(
-            "Interrupted writer left no diff; start a new run because Relay will not repeat it silently",
+          throw new ProvenWayError(
+            "Interrupted writer left no diff; start a new run because ProvenWay will not repeat it silently",
             EXIT_CODES.awaitingUser,
             "WRITER_REPLAY_REFUSED",
           );
@@ -322,7 +322,7 @@ export class WorkflowEngine {
 
       if (packet.open_questions.some((question) => question.blocking)) {
         if (!this.ui.interactive) {
-          throw new RelayError(
+          throw new ProvenWayError(
             "Answering blocking plan questions requires an interactive terminal",
             EXIT_CODES.awaitingUser,
             "TTY_REQUIRED",
@@ -355,7 +355,7 @@ export class WorkflowEngine {
           signal,
         );
         if (packet.task_id !== runId || packet.repo_facts.base_commit !== run.baseCommit) {
-          throw new RelayError(
+          throw new ProvenWayError(
             "Revised TaskPacket does not match the active run",
             EXIT_CODES.provider,
             "TASK_PACKET_CONTEXT_MISMATCH",
@@ -436,7 +436,7 @@ export class WorkflowEngine {
       });
     } catch (error) {
       await this.recordFailure(runId, error);
-      throw asRelayError(error);
+      throw asProvenWayError(error);
     } finally {
       await lock.release();
     }
@@ -449,7 +449,7 @@ export class WorkflowEngine {
     worktree: string;
     runDirectory: string;
     verificationCommands: VerificationCommand[];
-    config: RelayConfig;
+    config: ProvenWayConfig;
     sessionId?: string;
     signal?: AbortSignal;
   }): Promise<WorkflowOutcome> {
@@ -519,10 +519,14 @@ export class WorkflowEngine {
       );
     }
 
-    await this.transition(input.runId, "finalizing", "committing accepted diff to Relay branch");
+    await this.transition(
+      input.runId,
+      "finalizing",
+      "committing accepted diff to ProvenWay branch",
+    );
     const finalCommit = await commitWorktree(
       input.worktree,
-      `relay: ${slugForCommit(this.store.requireRun(input.runId).task)}`,
+      `provenway: ${slugForCommit(this.store.requireRun(input.runId).task)}`,
     );
     this.store.setFinalCommit(input.runId, finalCommit);
     await this.updateImplementationFinalCommit(input.runId, input.runDirectory, finalCommit);
@@ -535,7 +539,7 @@ export class WorkflowEngine {
 
   private async probeRequiredProviders(
     repository: RepositoryInfo,
-    config: RelayConfig,
+    config: ProvenWayConfig,
     planOnly: boolean,
   ): Promise<Record<string, ProviderCapabilities>> {
     const codex = await this.adapters.codex.probe({
@@ -588,7 +592,7 @@ export class WorkflowEngine {
       signal,
     );
     if (packet.task_id !== run.runId || packet.repo_facts.base_commit !== repository.baseCommit) {
-      throw new RelayError(
+      throw new ProvenWayError(
         "TaskPacket does not match the active run ID and base commit",
         EXIT_CODES.provider,
         "TASK_PACKET_CONTEXT_MISMATCH",
@@ -606,7 +610,7 @@ export class WorkflowEngine {
     repository: RepositoryInfo,
     worktree: string,
     runDirectory: string,
-    config: RelayConfig,
+    config: ProvenWayConfig,
     signal?: AbortSignal,
   ): Promise<ImplementationResult> {
     await this.transition(runId, "implementing", "starting Cursor implementation");
@@ -635,7 +639,7 @@ export class WorkflowEngine {
     assertNoForbiddenPaths(changes.all, packet.forbidden_paths);
     const diff = await worktreeDiff(worktree);
     if (!diff.trim()) {
-      throw new RelayError(
+      throw new ProvenWayError(
         "Cursor completed without producing a diff",
         EXIT_CODES.provider,
         "EMPTY_IMPLEMENTATION",
@@ -669,7 +673,7 @@ export class WorkflowEngine {
       acceptance_criteria_addressed: claims.acceptanceCriteria,
       deviations: claims.deviations,
       unresolved_items: claims.unresolved,
-      relay_git: {
+      provenway_git: {
         diff_sha256: sha256(diff),
         changed: changes.changed,
         created: changes.created,
@@ -693,7 +697,7 @@ export class WorkflowEngine {
     worktree: string,
     runDirectory: string,
     commands: VerificationCommand[],
-    config: RelayConfig,
+    config: ProvenWayConfig,
     signal?: AbortSignal,
   ): Promise<VerificationResult> {
     await this.transition(runId, "verifying", "running deterministic verification");
@@ -736,7 +740,7 @@ export class WorkflowEngine {
     verification: VerificationResult,
     worktree: string,
     runDirectory: string,
-    config: RelayConfig,
+    config: ProvenWayConfig,
     signal?: AbortSignal,
   ): Promise<ReviewResult> {
     await this.transition(runId, "reviewing", "starting read-only Codex review");
@@ -756,7 +760,7 @@ export class WorkflowEngine {
         signal,
       );
       if (review.task_id !== runId) {
-        throw new RelayError(
+        throw new ProvenWayError(
           "ReviewResult task_id does not match the active run",
           EXIT_CODES.provider,
           "REVIEW_CONTEXT_MISMATCH",
@@ -773,7 +777,10 @@ export class WorkflowEngine {
       await this.syncManifest(runId);
       return combined;
     } catch (error) {
-      if (error instanceof RelayError && ["PROVIDER_AUTH", "PROVIDER_QUOTA"].includes(error.code)) {
+      if (
+        error instanceof ProvenWayError &&
+        ["PROVIDER_AUTH", "PROVIDER_QUOTA"].includes(error.code)
+      ) {
         throw error;
       }
       await this.transition(runId, "implemented_unreviewed", "review provider unavailable");
@@ -789,7 +796,7 @@ export class WorkflowEngine {
     sessionId: string | undefined,
     worktree: string,
     runDirectory: string,
-    config: RelayConfig,
+    config: ProvenWayConfig,
     signal?: AbortSignal,
   ): Promise<void> {
     const attempt = this.store.requireRun(runId).repairCount;
@@ -831,7 +838,7 @@ export class WorkflowEngine {
     runDirectory: string,
     model: string,
     reasoning: "low" | "medium" | "high" | undefined,
-    config: RelayConfig,
+    config: ProvenWayConfig,
     signal?: AbortSignal,
   ): Promise<T> {
     const outputFile = path.join(runDirectory, `${stage}.final.json`);
@@ -959,18 +966,18 @@ export class WorkflowEngine {
 
   private async confirmWrite(
     runId: string,
-    config: RelayConfig,
+    config: ProvenWayConfig,
     commands: VerificationCommand[],
     networkEnforcement: string,
   ): Promise<void> {
     if (!this.ui.interactive) {
-      throw new RelayError(
+      throw new ProvenWayError(
         "Write-capable runs require an interactive terminal; the run can be resumed in a TTY",
         EXIT_CODES.awaitingUser,
         "TTY_REQUIRED",
       );
     }
-    const proposedBranch = `relay/${runId.slice(0, 8).toLowerCase()}-*`;
+    const proposedBranch = `provenway/${runId.slice(0, 8).toLowerCase()}-*`;
     this.ui.info(`Branch: ${proposedBranch}`);
     this.ui.info(
       `Models: architect=${config.roles.architect.model}, implementer=${config.roles.implementer.model}, reviewer=${config.roles.reviewer.model}`,
@@ -987,7 +994,7 @@ export class WorkflowEngine {
     );
     if (!confirmed) {
       await this.transition(runId, "cancelled", "user declined write confirmation");
-      throw new RelayError("Run cancelled", EXIT_CODES.cancelled, "CANCELLED");
+      throw new ProvenWayError("Run cancelled", EXIT_CODES.cancelled, "CANCELLED");
     }
   }
 
@@ -1075,11 +1082,11 @@ export class WorkflowEngine {
   private async recordFailure(runId: string, error: unknown): Promise<void> {
     const current = this.store.getRun(runId);
     if (!current || isTerminal(current.status)) return;
-    const relayError = asRelayError(error);
-    const target = failureStatus(current.status, relayError);
+    const provenwayError = asProvenWayError(error);
+    const target = failureStatus(current.status, provenwayError);
     if (canTransition(current.status, target))
-      this.store.transition(runId, target, relayError.message);
-    else this.store.forceStatus(runId, target, relayError.message);
+      this.store.transition(runId, target, provenwayError.message);
+    else this.store.forceStatus(runId, target, provenwayError.message);
     try {
       await this.syncManifest(runId);
     } catch {
@@ -1099,7 +1106,7 @@ function requestFor(input: {
   schemaPath?: string;
   outputFile?: string;
   runDirectory: string;
-  config: RelayConfig;
+  config: ProvenWayConfig;
   signal?: AbortSignal;
 }): HarnessRunRequest {
   return {
@@ -1126,31 +1133,31 @@ function assertProviderCapabilities(
   capabilities: ProviderCapabilities,
   permission: "read-only" | "workspace-write",
   model: string,
-  config: RelayConfig,
+  config: ProvenWayConfig,
 ): void {
   if (!capabilities.installed) {
-    throw new RelayError(
+    throw new ProvenWayError(
       `${name} CLI is not installed: ${capabilities.warnings.join("; ")}`,
       EXIT_CODES.environment,
       "PROVIDER_NOT_INSTALLED",
     );
   }
   if (capabilities.authenticated !== true) {
-    throw new RelayError(
+    throw new ProvenWayError(
       `${name} CLI is not authenticated`,
       EXIT_CODES.environment,
       "PROVIDER_AUTH",
     );
   }
   if (!config.policy.allow_payg && capabilities.authMode === "api-key") {
-    throw new RelayError(
+    throw new ProvenWayError(
       `${name} is authenticated with an API key while pay-as-you-go is disabled`,
       EXIT_CODES.environment,
       "PAYG_AUTH_BLOCKED",
     );
   }
   if (!capabilities.permissionModes.includes(permission)) {
-    throw new RelayError(
+    throw new ProvenWayError(
       `${name} cannot enforce required permission mode: ${permission}`,
       EXIT_CODES.environment,
       "PROVIDER_CAPABILITY_MISSING",
@@ -1160,28 +1167,28 @@ function assertProviderCapabilities(
     name === "Codex" &&
     (!capabilities.supportsJsonEvents || !capabilities.supportsOutputSchema)
   ) {
-    throw new RelayError(
+    throw new ProvenWayError(
       "Codex is missing structured automation capabilities",
       EXIT_CODES.environment,
       "PROVIDER_CAPABILITY_MISSING",
     );
   }
   if (name === "Cursor" && !capabilities.supportsJsonEvents) {
-    throw new RelayError(
+    throw new ProvenWayError(
       "Cursor is missing stream-json support",
       EXIT_CODES.environment,
       "PROVIDER_CAPABILITY_MISSING",
     );
   }
   if (capabilities.warnings.length > 0) {
-    throw new RelayError(
+    throw new ProvenWayError(
       `${name} capability probe failed: ${capabilities.warnings.join("; ")}`,
       EXIT_CODES.environment,
       "PROVIDER_CAPABILITY_MISSING",
     );
   }
   if (capabilities.availableModels?.length && !capabilities.availableModels.includes(model)) {
-    throw new RelayError(
+    throw new ProvenWayError(
       `${name} model is not available: ${model}`,
       EXIT_CODES.environment,
       "MODEL_UNAVAILABLE",
@@ -1193,7 +1200,7 @@ function withVerificationBlocker(
   review: ReviewResult,
   verification: VerificationResult,
 ): ReviewResult {
-  if (verification.passed || review.findings.some((finding) => finding.id === "RELAY-VERIFY")) {
+  if (verification.passed || review.findings.some((finding) => finding.id === "PROVENWAY-VERIFY")) {
     return review;
   }
   const failed = verification.commands
@@ -1206,7 +1213,7 @@ function withVerificationBlocker(
     findings: [
       ...review.findings,
       {
-        id: "RELAY-VERIFY",
+        id: "PROVENWAY-VERIFY",
         severity: "blocking",
         path: null,
         line: null,
@@ -1258,7 +1265,7 @@ function parseImplementationClaims(finalText: string): {
   }
 }
 
-function failureStatus(current: RunStatus, error: RelayError): RunStatus {
+function failureStatus(current: RunStatus, error: ProvenWayError): RunStatus {
   if (error.code === "CANCELLED" || error.exitCode === EXIT_CODES.cancelled) return "cancelled";
   if (error.code === "PROVIDER_QUOTA") return "blocked_quota";
   if (["PROVIDER_AUTH", "PAYG_AUTH_BLOCKED"].includes(error.code)) return "blocked_auth";

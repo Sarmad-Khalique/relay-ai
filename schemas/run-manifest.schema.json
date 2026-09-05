@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://relay-ai.dev/schemas/run-manifest.schema.json",
+  "$id": "https://raw.githubusercontent.com/ProvenWay/provenway/main/schemas/run-manifest.schema.json",
   "title": "RunManifest",
   "type": "object",
   "additionalProperties": false,

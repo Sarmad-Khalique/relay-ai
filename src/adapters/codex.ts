@@ -10,7 +10,7 @@ import type {
   ProbeContext,
   ProviderCapabilities,
 } from "../adapter-contract.js";
-import { EXIT_CODES, RelayError } from "../errors.js";
+import { EXIT_CODES, ProvenWayError } from "../errors.js";
 import { captureCommand, resolveExecutable } from "../executable.js";
 import { sanitizedProviderEnvironment } from "../redaction.js";
 import { runProcess } from "../subprocess.js";
@@ -136,7 +136,7 @@ export class CodexAdapter implements HarnessAdapter {
       onStdoutLine: async (line) => {
         if (!line.trim()) return;
         if (Buffer.byteLength(line) > request.maxEventBytes) {
-          throw new RelayError(
+          throw new ProvenWayError(
             "Codex emitted an oversized JSONL event",
             EXIT_CODES.provider,
             "EVENT_LIMIT_EXCEEDED",
@@ -149,9 +149,9 @@ export class CodexAdapter implements HarnessAdapter {
       },
     });
     if (result.cancelled)
-      throw new RelayError("Codex run cancelled", EXIT_CODES.cancelled, "CANCELLED");
+      throw new ProvenWayError("Codex run cancelled", EXIT_CODES.cancelled, "CANCELLED");
     if (result.timedOut)
-      throw new RelayError("Codex run timed out", EXIT_CODES.provider, "PROVIDER_TIMEOUT");
+      throw new ProvenWayError("Codex run timed out", EXIT_CODES.provider, "PROVIDER_TIMEOUT");
     if (result.exitCode !== 0) {
       throw providerFailure("Codex", result.stderr, codexErrorFromEvents(events));
     }
@@ -224,27 +224,27 @@ function unavailable(message: string): ProviderCapabilities {
   };
 }
 
-function unavailableError(): RelayError {
-  return new RelayError("Codex CLI was not found", EXIT_CODES.environment, "CODEX_NOT_FOUND");
+function unavailableError(): ProvenWayError {
+  return new ProvenWayError("Codex CLI was not found", EXIT_CODES.environment, "CODEX_NOT_FOUND");
 }
 
-function providerFailure(provider: string, stderr: string, eventError = ""): RelayError {
+function providerFailure(provider: string, stderr: string, eventError = ""): ProvenWayError {
   const detail = stderr.trim() || eventError.trim() || "no error text";
   if (/quota|rate.?limit|usage.?limit/i.test(detail)) {
-    return new RelayError(
+    return new ProvenWayError(
       `${provider} quota or rate limit reached`,
       EXIT_CODES.awaitingUser,
       "PROVIDER_QUOTA",
     );
   }
   if (/auth|login|unauthorized|forbidden/i.test(detail)) {
-    return new RelayError(
+    return new ProvenWayError(
       `${provider} is not authenticated`,
       EXIT_CODES.environment,
       "PROVIDER_AUTH",
     );
   }
-  return new RelayError(
+  return new ProvenWayError(
     `${provider} exited unsuccessfully: ${detail}`,
     EXIT_CODES.provider,
     "PROVIDER_FAILED",

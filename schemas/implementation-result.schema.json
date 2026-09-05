@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://relay-ai.dev/schemas/implementation-result.schema.json",
+  "$id": "https://raw.githubusercontent.com/ProvenWay/provenway/main/schemas/implementation-result.schema.json",
   "title": "ImplementationResult",
   "type": "object",
   "additionalProperties": false,
@@ -16,7 +16,7 @@
     "acceptance_criteria_addressed",
     "deviations",
     "unresolved_items",
-    "relay_git"
+    "provenway_git"
   ],
   "properties": {
     "schema_version": { "type": "string", "const": "1.0" },
@@ -50,7 +50,7 @@
     "acceptance_criteria_addressed": { "type": "array", "items": { "type": "string" } },
     "deviations": { "type": "array", "items": { "type": "string" } },
     "unresolved_items": { "type": "array", "items": { "type": "string" } },
-    "relay_git": {
+    "provenway_git": {
       "type": "object",
       "additionalProperties": false,
       "required": ["diff_sha256", "changed", "created", "deleted"],

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://relay-ai.dev/schemas/task-packet.schema.json",
+  "$id": "https://raw.githubusercontent.com/ProvenWay/provenway/main/schemas/task-packet.schema.json",
   "title": "TaskPacket",
   "type": "object",
   "additionalProperties": false,

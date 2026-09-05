@@ -1,7 +1,7 @@
 import * as prompts from "@clack/prompts";
-import { EXIT_CODES, RelayError } from "./errors.js";
+import { EXIT_CODES, ProvenWayError } from "./errors.js";
 
-export interface RelayUi {
+export interface ProvenWayUi {
   readonly interactive: boolean;
   info(message: string): void;
   warn(message: string): void;
@@ -12,7 +12,7 @@ export interface RelayUi {
   select(message: string, options: Array<{ value: string; label: string }>): Promise<string>;
 }
 
-export class ConsoleUi implements RelayUi {
+export class ConsoleUi implements ProvenWayUi {
   readonly interactive = process.stdin.isTTY && process.stdout.isTTY;
 
   info(message: string): void {
@@ -51,7 +51,7 @@ export class ConsoleUi implements RelayUi {
 
   private requireInteractive(): void {
     if (!this.interactive) {
-      throw new RelayError(
+      throw new ProvenWayError(
         "This operation requires an interactive terminal",
         EXIT_CODES.awaitingUser,
         "TTY_REQUIRED",
@@ -62,7 +62,7 @@ export class ConsoleUi implements RelayUi {
 
 function unwrapPrompt<T>(value: T | symbol): T {
   if (prompts.isCancel(value)) {
-    throw new RelayError("Operation cancelled", EXIT_CODES.cancelled, "CANCELLED");
+    throw new ProvenWayError("Operation cancelled", EXIT_CODES.cancelled, "CANCELLED");
   }
   return value;
 }

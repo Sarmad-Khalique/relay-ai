@@ -1,7 +1,7 @@
 import { open, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { sha256 } from "./artifacts.js";
-import { EXIT_CODES, RelayError } from "./errors.js";
+import { EXIT_CODES, ProvenWayError } from "./errors.js";
 import { ensurePrivateDirectory } from "./paths.js";
 
 export interface RepositoryLock {
@@ -29,8 +29,8 @@ export async function acquireRepositoryLock(
     handle = await open(lockPath, "wx", 0o600);
   } catch (error) {
     if (isNodeError(error) && error.code === "EEXIST") {
-      throw new RelayError(
-        `Another Relay run is active for ${repositoryRoot}`,
+      throw new ProvenWayError(
+        `Another ProvenWay run is active for ${repositoryRoot}`,
         EXIT_CODES.awaitingUser,
         "REPOSITORY_LOCKED",
       );

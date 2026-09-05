@@ -2,7 +2,7 @@ import { execFile as execFileCallback } from "node:child_process";
 import { promisify } from "node:util";
 import { mkdir, realpath, stat } from "node:fs/promises";
 import path from "node:path";
-import { EXIT_CODES, RelayError } from "./errors.js";
+import { EXIT_CODES, ProvenWayError } from "./errors.js";
 import { assertRealPathInside, isPathInside } from "./paths.js";
 
 const execFile = promisify(execFileCallback);
@@ -29,7 +29,7 @@ export async function inspectRepository(cwd: string): Promise<RepositoryInfo> {
   try {
     root = await git(cwd, ["rev-parse", "--show-toplevel"]);
   } catch {
-    throw new RelayError(
+    throw new ProvenWayError(
       `${cwd} is not inside a Git repository`,
       EXIT_CODES.invalidInput,
       "NOT_A_GIT_REPOSITORY",
@@ -43,8 +43,8 @@ export async function inspectRepository(cwd: string): Promise<RepositoryInfo> {
     git(root, ["ls-files"]),
   ]);
   if (!baseCommit) {
-    throw new RelayError(
-      "Relay requires a repository with at least one commit",
+    throw new ProvenWayError(
+      "ProvenWay requires a repository with at least one commit",
       EXIT_CODES.invalidInput,
       "EMPTY_GIT_HISTORY",
     );
@@ -70,14 +70,14 @@ export async function verifyRepositoryUnchanged(
     git(root, ["status", "--porcelain=v1", "--untracked-files=all"]),
   ]);
   if (head !== baseCommit) {
-    throw new RelayError(
+    throw new ProvenWayError(
       "Repository HEAD changed after planning; start a new run",
       EXIT_CODES.awaitingUser,
       "BASE_COMMIT_CHANGED",
     );
   }
   if (requireClean && status !== "") {
-    throw new RelayError(
+    throw new ProvenWayError(
       "Repository became dirty after planning; start a new run after resolving changes",
       EXIT_CODES.awaitingUser,
       "SOURCE_CHECKOUT_CHANGED",
@@ -98,7 +98,7 @@ export async function createManagedWorktree(input: {
   const realManagedRoot = await realpath(input.managedRoot);
   const worktree = path.join(realManagedRoot, input.runId);
   if (!isPathInside(realManagedRoot, worktree)) {
-    throw new RelayError(
+    throw new ProvenWayError(
       "Managed worktree path escaped its root",
       EXIT_CODES.provider,
       "WORKTREE_PATH_ESCAPE",
@@ -106,7 +106,7 @@ export async function createManagedWorktree(input: {
   }
   try {
     await stat(worktree);
-    throw new RelayError(
+    throw new ProvenWayError(
       `Worktree target already exists: ${worktree}`,
       EXIT_CODES.provider,
       "WORKTREE_TARGET_EXISTS",
@@ -120,7 +120,7 @@ export async function createManagedWorktree(input: {
     !registered.includes(`worktree ${worktree}`) ||
     !registered.includes(`branch refs/heads/${branch}`)
   ) {
-    throw new RelayError(
+    throw new ProvenWayError(
       "Git did not register the expected managed worktree",
       EXIT_CODES.provider,
       "WORKTREE_REGISTRATION_FAILED",
@@ -176,12 +176,12 @@ export async function commitWorktree(worktree: string, message: string): Promise
   const email = await gitOptional(worktree, ["config", "--get", "user.email"]);
   const env: NodeJS.ProcessEnv = { ...process.env };
   if (!name) {
-    env.GIT_AUTHOR_NAME = "Relay";
-    env.GIT_COMMITTER_NAME = "Relay";
+    env.GIT_AUTHOR_NAME = "ProvenWay";
+    env.GIT_COMMITTER_NAME = "ProvenWay";
   }
   if (!email) {
-    env.GIT_AUTHOR_EMAIL = "relay@localhost";
-    env.GIT_COMMITTER_EMAIL = "relay@localhost";
+    env.GIT_AUTHOR_EMAIL = "provenway@localhost";
+    env.GIT_COMMITTER_EMAIL = "provenway@localhost";
   }
   await git(worktree, ["commit", "--no-gpg-sign", "-m", message], env);
   return git(worktree, ["rev-parse", "HEAD"]);
@@ -223,7 +223,7 @@ export async function git(
     return result.stdout.trimEnd();
   } catch (error) {
     const stderr = isExecError(error) ? error.stderr : undefined;
-    throw new RelayError(
+    throw new ProvenWayError(
       `git ${args[0] ?? "command"} failed${stderr ? `: ${stderr.trim()}` : ""}`,
       EXIT_CODES.provider,
       "GIT_COMMAND_FAILED",
@@ -238,7 +238,7 @@ async function uniqueBranch(repositoryRoot: string, runId: string, task: string)
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 40);
-  const base = `relay/${runId.slice(0, 8).toLowerCase()}-${slug || "task"}`;
+  const base = `provenway/${runId.slice(0, 8).toLowerCase()}-${slug || "task"}`;
   let candidate = base;
   let suffix = 1;
   while (await branchExists(repositoryRoot, candidate)) candidate = `${base}-${suffix++}`;

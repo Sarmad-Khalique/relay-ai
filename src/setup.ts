@@ -1,15 +1,15 @@
 import type { ProviderCapabilities } from "./adapter-contract.js";
 import { CodexAdapter } from "./adapters/codex.js";
 import { CursorAdapter } from "./adapters/cursor.js";
-import { resolveConfiguration, writeGlobalConfig, type RelayConfig } from "./config.js";
-import type { RelayPaths } from "./paths.js";
-import type { RelayUi } from "./ui.js";
+import { resolveConfiguration, writeGlobalConfig, type ProvenWayConfig } from "./config.js";
+import type { ProvenWayPaths } from "./paths.js";
+import type { ProvenWayUi } from "./ui.js";
 
 export async function initializeConfiguration(
-  paths: RelayPaths,
-  ui: RelayUi,
+  paths: ProvenWayPaths,
+  ui: ProvenWayUi,
   cwd: string,
-): Promise<RelayConfig> {
+): Promise<ProvenWayConfig> {
   const resolved = await resolveConfiguration(paths);
   const config = structuredClone(resolved.config);
   const codex = new CodexAdapter(config.providers.codex.executable);
@@ -45,7 +45,7 @@ export async function initializeConfiguration(
 }
 
 async function chooseModel(
-  ui: RelayUi,
+  ui: ProvenWayUi,
   message: string,
   capabilities: ProviderCapabilities,
   current: string,
@@ -63,16 +63,16 @@ async function chooseModel(
 }
 
 function reportAvailability(
-  ui: RelayUi,
+  ui: ProvenWayUi,
   name: string,
   capabilities: ProviderCapabilities,
   loginCommand: string,
 ): void {
   if (!capabilities.installed) {
     ui.warn(
-      `${name} CLI is not installed; enter its model manually and install it before relay run.`,
+      `${name} CLI is not installed; enter its model manually and install it before provenway run.`,
     );
   } else if (!capabilities.authenticated) {
-    ui.warn(`${name} CLI is not authenticated; run ${loginCommand} before relay run.`);
+    ui.warn(`${name} CLI is not authenticated; run ${loginCommand} before provenway run.`);
   }
 }

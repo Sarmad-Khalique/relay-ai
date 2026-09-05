@@ -11,9 +11,9 @@ afterEach(async () =>
 
 describe("run store", () => {
   it("persists append-only transitions and run metadata", async () => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "relay-store-"));
+    const root = await mkdtemp(path.join(os.tmpdir(), "provenway-store-"));
     temporary.push(root);
-    const store = await RunStore.open(path.join(root, "relay.sqlite"));
+    const store = await RunStore.open(path.join(root, "provenway.sqlite"));
     try {
       store.createRun({
         runId: "01TEST",
@@ -24,11 +24,11 @@ describe("run store", () => {
       });
       store.transition("01TEST", "preparing", "probe");
       store.transition("01TEST", "planning", "plan");
-      store.setLocations("01TEST", "relay/test", "/tmp/worktree");
+      store.setLocations("01TEST", "provenway/test", "/tmp/worktree");
       store.setRepairCount("01TEST", 1);
       expect(store.requireRun("01TEST")).toMatchObject({
         status: "planning",
-        branch: "relay/test",
+        branch: "provenway/test",
         repairCount: 1,
       });
       expect(store.transitions("01TEST").map((item) => item.to)).toEqual([

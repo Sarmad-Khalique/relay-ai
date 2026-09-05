@@ -5,7 +5,7 @@ import implementationResultSchema from "../schemas/implementation-result.schema.
 import verificationResultSchema from "../schemas/verification-result.schema.json" with { type: "json" };
 import reviewResultSchema from "../schemas/review-result.schema.json" with { type: "json" };
 import runManifestSchema from "../schemas/run-manifest.schema.json" with { type: "json" };
-import { EXIT_CODES, RelayError } from "./errors.js";
+import { EXIT_CODES, ProvenWayError } from "./errors.js";
 import type {
   ImplementationResult,
   ReviewResult,
@@ -40,7 +40,7 @@ export function validateOrThrow<T>(
   label: string,
 ): T {
   if (validator(value)) return value;
-  throw new RelayError(
+  throw new ProvenWayError(
     `Invalid ${label}: ${formatAjvErrors(validator.errors)}`,
     EXIT_CODES.provider,
     "INVALID_STRUCTURED_OUTPUT",
@@ -56,8 +56,8 @@ export function parseJsonOutput<T>(
   try {
     return validateOrThrow(validator, JSON.parse(stripCodeFence(value)) as unknown, label);
   } catch (error) {
-    if (error instanceof RelayError) throw error;
-    throw new RelayError(
+    if (error instanceof ProvenWayError) throw error;
+    throw new ProvenWayError(
       `Invalid JSON for ${label}: ${error instanceof Error ? error.message : String(error)}`,
       EXIT_CODES.provider,
       "INVALID_STRUCTURED_OUTPUT",

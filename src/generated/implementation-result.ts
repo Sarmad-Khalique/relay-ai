@@ -22,7 +22,7 @@ export interface ImplementationResult {
   acceptance_criteria_addressed: string[];
   deviations: string[];
   unresolved_items: string[];
-  relay_git: {
+  provenway_git: {
     diff_sha256: string;
     changed: string[];
     created: string[];

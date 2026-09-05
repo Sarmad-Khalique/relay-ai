@@ -3,8 +3,8 @@ import path from "node:path";
 import YAML from "yaml";
 import { z } from "zod";
 import { BUILTIN_FORBIDDEN_PATHS } from "./policy.js";
-import { ensurePrivateDirectory, type RelayPaths } from "./paths.js";
-import { EXIT_CODES, RelayError } from "./errors.js";
+import { ensurePrivateDirectory, type ProvenWayPaths } from "./paths.js";
+import { EXIT_CODES, ProvenWayError } from "./errors.js";
 
 const verificationCommandSchema = z.object({
   name: z.string().min(1),
@@ -19,7 +19,7 @@ const roleSchema = z.object({
   reasoning: z.enum(["low", "medium", "high"]).optional(),
 });
 
-export const relayConfigSchema = z.object({
+export const provenwayConfigSchema = z.object({
   version: z.literal(1),
   providers: z.object({
     codex: z.object({ executable: z.string().min(1) }),
@@ -49,7 +49,7 @@ export const relayConfigSchema = z.object({
   }),
 });
 
-export type RelayConfig = z.infer<typeof relayConfigSchema>;
+export type ProvenWayConfig = z.infer<typeof provenwayConfigSchema>;
 export type VerificationCommand = z.infer<typeof verificationCommandSchema>;
 
 export interface ConfigOverrides {
@@ -61,13 +61,13 @@ export interface ConfigOverrides {
 }
 
 export interface ResolvedConfig {
-  config: RelayConfig;
+  config: ProvenWayConfig;
   provenance: Record<string, string>;
   globalFile: string;
   repositoryFile?: string;
 }
 
-export const DEFAULT_CONFIG: RelayConfig = {
+export const DEFAULT_CONFIG: ProvenWayConfig = {
   version: 1,
   providers: {
     codex: { executable: "codex" },
@@ -98,7 +98,7 @@ export const DEFAULT_CONFIG: RelayConfig = {
 };
 
 export async function resolveConfiguration(
-  paths: RelayPaths,
+  paths: ProvenWayPaths,
   repositoryRoot?: string,
   overrides: ConfigOverrides = {},
 ): Promise<ResolvedConfig> {
@@ -115,7 +115,7 @@ export async function resolveConfiguration(
 
   let repositoryFile: string | undefined;
   if (repositoryRoot) {
-    repositoryFile = path.join(repositoryRoot, ".relay", "config.yaml");
+    repositoryFile = path.join(repositoryRoot, ".provenway", "config.yaml");
     const repositoryLayer = await readYamlIfPresent(repositoryFile);
     if (repositoryLayer) {
       validateRepositoryLayer(repositoryLayer, globalConfig);
@@ -138,20 +138,23 @@ export async function resolveConfiguration(
   };
 }
 
-export function assertConfiguredModels(config: RelayConfig): void {
+export function assertConfiguredModels(config: ProvenWayConfig): void {
   const missing = Object.entries(config.roles)
     .filter(([, role]) => role.model.trim() === "")
     .map(([name]) => name);
   if (missing.length > 0) {
-    throw new RelayError(
-      `Missing model selection for roles: ${missing.join(", ")}. Run relay init.`,
+    throw new ProvenWayError(
+      `Missing model selection for roles: ${missing.join(", ")}. Run provenway init.`,
       EXIT_CODES.invalidInput,
       "MODELS_NOT_CONFIGURED",
     );
   }
 }
 
-export async function writeGlobalConfig(paths: RelayPaths, config: RelayConfig): Promise<void> {
+export async function writeGlobalConfig(
+  paths: ProvenWayPaths,
+  config: ProvenWayConfig,
+): Promise<void> {
   await ensurePrivateDirectory(paths.configDir);
   const serialized = YAML.stringify(config, { lineWidth: 100 });
   await writeFile(paths.configFile, serialized, { mode: 0o600 });
@@ -162,7 +165,7 @@ async function readYamlIfPresent(file: string): Promise<Record<string, unknown> 
   try {
     const parsed: unknown = YAML.parse(await readFile(file, "utf8"));
     if (!isRecord(parsed)) {
-      throw new RelayError(
+      throw new ProvenWayError(
         `Configuration must be a YAML object: ${file}`,
         EXIT_CODES.invalidInput,
         "INVALID_CONFIG",
@@ -175,10 +178,10 @@ async function readYamlIfPresent(file: string): Promise<Record<string, unknown> 
   }
 }
 
-function parseConfig(value: unknown, label: string): RelayConfig {
-  const result = relayConfigSchema.safeParse(value);
+function parseConfig(value: unknown, label: string): ProvenWayConfig {
+  const result = provenwayConfigSchema.safeParse(value);
   if (!result.success) {
-    throw new RelayError(
+    throw new ProvenWayError(
       `Invalid ${label}: ${z.prettifyError(result.error)}`,
       EXIT_CODES.invalidInput,
       "INVALID_CONFIG",
@@ -188,7 +191,7 @@ function parseConfig(value: unknown, label: string): RelayConfig {
   return result.data;
 }
 
-function validateRepositoryLayer(layer: Record<string, unknown>, base: RelayConfig): void {
+function validateRepositoryLayer(layer: Record<string, unknown>, base: ProvenWayConfig): void {
   const allowedTopLevel = new Set(["version", "roles", "workflow", "verification", "policy"]);
   for (const key of Object.keys(layer)) {
     if (!allowedTopLevel.has(key)) invalidRepoSetting(key);
@@ -267,7 +270,7 @@ function mergeRepositoryLayer(base: unknown, layer: Record<string, unknown>): un
 }
 
 function invalidRepoSetting(key: string): never {
-  throw new RelayError(
+  throw new ProvenWayError(
     `Repository configuration may not widen or replace protected setting: ${key}`,
     EXIT_CODES.invalidInput,
     "UNTRUSTED_REPOSITORY_CONFIG",

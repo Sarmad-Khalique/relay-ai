@@ -5,7 +5,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 RUN corepack enable
-WORKDIR /relay
+WORKDIR /provenway
 COPY . .
 RUN pnpm install --frozen-lockfile
 RUN pnpm check

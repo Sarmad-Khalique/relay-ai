@@ -1,4 +1,4 @@
-import type { RelayConfig } from "./config.js";
+import type { ProvenWayConfig } from "./config.js";
 
 export type AdapterId = string;
 export type PermissionMode = "read-only" | "workspace-write";
@@ -51,7 +51,7 @@ export interface HarnessRunRequest {
   timeoutMs: number;
   maxEventBytes: number;
   maxLogBytes: number;
-  config: RelayConfig;
+  config: ProvenWayConfig;
   signal?: AbortSignal;
 }
 

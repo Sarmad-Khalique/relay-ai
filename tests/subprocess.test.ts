@@ -11,7 +11,7 @@ afterEach(async () =>
 
 describe("safe subprocess runner", () => {
   it("captures output without a shell and redacts tokens before persistence", async () => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "relay-process-"));
+    const root = await mkdtemp(path.join(os.tmpdir(), "provenway-process-"));
     temporary.push(root);
     const stdoutPath = path.join(root, "stdout.log");
     const result = await runProcess({
@@ -29,7 +29,7 @@ describe("safe subprocess runner", () => {
   });
 
   it("terminates a timed-out process group", async () => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "relay-process-"));
+    const root = await mkdtemp(path.join(os.tmpdir(), "provenway-process-"));
     temporary.push(root);
     const result = await runProcess({
       executable: process.execPath,

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://relay-ai.dev/schemas/verification-result.schema.json",
+  "$id": "https://raw.githubusercontent.com/ProvenWay/provenway/main/schemas/verification-result.schema.json",
   "title": "VerificationResult",
   "type": "object",
   "additionalProperties": false,

@@ -19,7 +19,7 @@ afterEach(async () =>
 
 describe("Git worktree isolation", () => {
   it("retains accepted changes on a branch without changing the source checkout", async () => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "relay-git-"));
+    const root = await mkdtemp(path.join(os.tmpdir(), "provenway-git-"));
     temporary.push(root);
     const repository = await createGitRepository(root);
     const info = await inspectRepository(repository);
@@ -34,7 +34,7 @@ describe("Git worktree isolation", () => {
     await writeFile(path.join(location.worktree, "feature.txt"), "isolated\n");
     expect(await gitChanges(location.worktree)).toMatchObject({ created: ["feature.txt"] });
     expect(await worktreeDiff(location.worktree)).toContain("isolated");
-    const finalCommit = await commitWorktree(location.worktree, "relay: test");
+    const finalCommit = await commitWorktree(location.worktree, "provenway: test");
     await removeManagedWorktree(repository, location.worktree);
     expect(await git(repository, ["status", "--porcelain"])).toBe("");
     expect(await readFile(path.join(repository, "README.md"), "utf8")).toBe("# Fixture\n");

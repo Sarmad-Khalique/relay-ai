@@ -2,7 +2,7 @@ import { homedir } from "node:os";
 import path from "node:path";
 import { chmod, mkdir, realpath } from "node:fs/promises";
 
-export interface RelayPaths {
+export interface ProvenWayPaths {
   configDir: string;
   configFile: string;
   dataDir: string;
@@ -12,16 +12,16 @@ export interface RelayPaths {
   locksDir: string;
 }
 
-export function resolveRelayPaths(env: NodeJS.ProcessEnv = process.env): RelayPaths {
+export function resolveProvenWayPaths(env: NodeJS.ProcessEnv = process.env): ProvenWayPaths {
   const configBase = env.XDG_CONFIG_HOME || path.join(homedir(), ".config");
   const dataBase = env.XDG_DATA_HOME || path.join(homedir(), ".local", "share");
-  const configDir = path.join(configBase, "relay");
-  const dataDir = path.join(dataBase, "relay");
+  const configDir = path.join(configBase, "provenway");
+  const dataDir = path.join(dataBase, "provenway");
   return {
     configDir,
     configFile: path.join(configDir, "config.yaml"),
     dataDir,
-    databaseFile: path.join(dataDir, "relay.sqlite"),
+    databaseFile: path.join(dataDir, "provenway.sqlite"),
     runsDir: path.join(dataDir, "runs"),
     worktreesDir: path.join(dataDir, "worktrees"),
     locksDir: path.join(dataDir, "locks"),
@@ -33,7 +33,7 @@ export async function ensurePrivateDirectory(directory: string): Promise<void> {
   await chmod(directory, 0o700);
 }
 
-export async function ensureRelayPaths(paths: RelayPaths): Promise<void> {
+export async function ensureProvenWayPaths(paths: ProvenWayPaths): Promise<void> {
   await Promise.all([
     ensurePrivateDirectory(paths.configDir),
     ensurePrivateDirectory(paths.dataDir),

@@ -2,19 +2,19 @@ import { execFile as execFileCallback } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
-import type { RelayPaths } from "../src/paths.js";
-import type { RelayUi } from "../src/ui.js";
+import type { ProvenWayPaths } from "../src/paths.js";
+import type { ProvenWayUi } from "../src/ui.js";
 
 const execFile = promisify(execFileCallback);
 
-export function testPaths(root: string): RelayPaths {
-  const configDir = path.join(root, "config", "relay");
-  const dataDir = path.join(root, "data", "relay");
+export function testPaths(root: string): ProvenWayPaths {
+  const configDir = path.join(root, "config", "provenway");
+  const dataDir = path.join(root, "data", "provenway");
   return {
     configDir,
     configFile: path.join(configDir, "config.yaml"),
     dataDir,
-    databaseFile: path.join(dataDir, "relay.sqlite"),
+    databaseFile: path.join(dataDir, "provenway.sqlite"),
     runsDir: path.join(dataDir, "runs"),
     worktreesDir: path.join(dataDir, "worktrees"),
     locksDir: path.join(dataDir, "locks"),
@@ -29,9 +29,9 @@ export async function createGitRepository(root: string): Promise<string> {
   await git(repository, ["add", "README.md"]);
   await git(repository, [
     "-c",
-    "user.name=Relay Tests",
+    "user.name=ProvenWay Tests",
     "-c",
-    "user.email=relay-tests@localhost",
+    "user.email=provenway-tests@localhost",
     "commit",
     "-m",
     "fixture",
@@ -44,7 +44,7 @@ export async function git(cwd: string, args: string[]): Promise<string> {
   return result.stdout.trim();
 }
 
-export class TestUi implements RelayUi {
+export class TestUi implements ProvenWayUi {
   readonly interactive = true;
   readonly messages: string[] = [];
   readonly answers: string[] = [];

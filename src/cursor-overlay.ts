@@ -1,6 +1,6 @@
 import { chmod, lstat, mkdir, readFile, rm, rmdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { EXIT_CODES, RelayError } from "./errors.js";
+import { EXIT_CODES, ProvenWayError } from "./errors.js";
 import { isPathInside } from "./paths.js";
 import { mergeCursorDenyPermissions } from "./policy.js";
 
@@ -28,7 +28,7 @@ export async function applyCursorOverlay(
   try {
     const info = await lstat(overlayPath);
     if (info.isSymbolicLink()) {
-      throw new RelayError(
+      throw new ProvenWayError(
         "Refusing to replace a symlinked Cursor permission file",
         EXIT_CODES.provider,
         "CURSOR_OVERLAY_SYMLINK",
@@ -39,7 +39,7 @@ export async function applyCursorOverlay(
     try {
       existing = JSON.parse(content.toString("utf8")) as unknown;
     } catch {
-      throw new RelayError(
+      throw new ProvenWayError(
         "Existing .cursor/cli.json is invalid JSON",
         EXIT_CODES.invalidInput,
         "INVALID_CURSOR_CONFIG",
@@ -92,7 +92,7 @@ export async function restoreCursorOverlay(worktree: string, runDirectory: strin
 }
 
 function throwPathEscape(): never {
-  throw new RelayError(
+  throw new ProvenWayError(
     "Cursor overlay path escaped the worktree",
     EXIT_CODES.provider,
     "CURSOR_OVERLAY_PATH_ESCAPE",

@@ -3,9 +3,9 @@ import { CursorAdapter } from "./adapters/cursor.js";
 import { resolveConfiguration } from "./config.js";
 import { captureCommand } from "./executable.js";
 import { inspectRepository } from "./git.js";
-import type { RelayPaths } from "./paths.js";
-import { ensureRelayPaths } from "./paths.js";
-import type { RelayUi } from "./ui.js";
+import type { ProvenWayPaths } from "./paths.js";
+import { ensureProvenWayPaths } from "./paths.js";
+import type { ProvenWayUi } from "./ui.js";
 
 export interface DoctorResult {
   healthy: boolean;
@@ -13,12 +13,12 @@ export interface DoctorResult {
 }
 
 export async function runDoctor(
-  paths: RelayPaths,
-  ui: RelayUi,
+  paths: ProvenWayPaths,
+  ui: ProvenWayUi,
   cwd: string,
   deep: boolean,
 ): Promise<DoctorResult> {
-  await ensureRelayPaths(paths);
+  await ensureProvenWayPaths(paths);
   let repositoryRoot: string | undefined;
   try {
     repositoryRoot = (await inspectRepository(cwd)).root;

@@ -1,14 +1,14 @@
 {
-  "name": "@relay-ai/cli",
+  "name": "@provenway/cli",
   "version": "0.1.0-alpha.1",
-  "description": "A local, subscription-first control plane for deterministic AI coding workflows.",
-  "homepage": "https://github.com/Sarmad-Khalique/relay-ai#readme",
+  "description": "Local-first orchestration for verifiable AI coding workflows.",
+  "homepage": "https://github.com/ProvenWay/provenway#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Sarmad-Khalique/relay-ai.git"
+    "url": "git+https://github.com/ProvenWay/provenway.git"
   },
   "bugs": {
-    "url": "https://github.com/Sarmad-Khalique/relay-ai/issues"
+    "url": "https://github.com/ProvenWay/provenway/issues"
   },
   "type": "module",
   "license": "Apache-2.0",
@@ -17,7 +17,7 @@
   },
   "packageManager": "pnpm@10.27.0",
   "bin": {
-    "relay": "dist/cli.js"
+    "provenway": "dist/cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

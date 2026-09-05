@@ -1,7 +1,7 @@
 # Adapter contract
 
-The alpha exports its provider boundary from `@relay-ai/cli/adapter-contract`. An adapter reports
-capabilities, starts and optionally resumes a run, streams normalized events, and cancels by Relay run ID.
+The alpha exports its provider boundary from `@provenway/cli/adapter-contract`. An adapter reports
+capabilities, starts and optionally resumes a run, streams normalized events, and cancels by ProvenWay run ID.
 
 Adapters must:
 

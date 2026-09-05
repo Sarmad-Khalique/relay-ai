@@ -10,10 +10,10 @@ import { WorkflowEngine } from "../../src/workflow.js";
 import { createGitRepository, TestUi, testPaths } from "../helpers.js";
 
 const enabled =
-  process.env.RELAY_LIVE_CODEX === "1" &&
-  process.env.RELAY_LIVE_CURSOR === "1" &&
-  Boolean(process.env.RELAY_LIVE_CODEX_MODEL) &&
-  Boolean(process.env.RELAY_LIVE_CURSOR_MODEL);
+  process.env.PROVENWAY_LIVE_CODEX === "1" &&
+  process.env.PROVENWAY_LIVE_CURSOR === "1" &&
+  Boolean(process.env.PROVENWAY_LIVE_CODEX_MODEL) &&
+  Boolean(process.env.PROVENWAY_LIVE_CURSOR_MODEL);
 const temporary: string[] = [];
 afterAll(async () =>
   Promise.all(temporary.map((item) => rm(item, { recursive: true, force: true }))),
@@ -21,14 +21,14 @@ afterAll(async () =>
 
 describe.skipIf(!enabled)("live provider workflow", () => {
   it("completes a tiny account-authenticated Codex/Cursor run", async () => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "relay-live-"));
+    const root = await mkdtemp(path.join(os.tmpdir(), "provenway-live-"));
     temporary.push(root);
     const repository = await createGitRepository(root);
     const paths = testPaths(root);
     const config = structuredClone(DEFAULT_CONFIG);
-    config.roles.architect.model = process.env.RELAY_LIVE_CODEX_MODEL ?? "";
-    config.roles.reviewer.model = process.env.RELAY_LIVE_CODEX_MODEL ?? "";
-    config.roles.implementer.model = process.env.RELAY_LIVE_CURSOR_MODEL ?? "";
+    config.roles.architect.model = process.env.PROVENWAY_LIVE_CODEX_MODEL ?? "";
+    config.roles.reviewer.model = process.env.PROVENWAY_LIVE_CODEX_MODEL ?? "";
+    config.roles.implementer.model = process.env.PROVENWAY_LIVE_CURSOR_MODEL ?? "";
     config.workflow.repair_attempts = 0;
     await writeGlobalConfig(paths, config);
     const store = await RunStore.open(paths.databaseFile);
@@ -41,7 +41,7 @@ describe.skipIf(!enabled)("live provider workflow", () => {
       );
       const outcome = await engine.execute({
         cwd: repository,
-        task: "Create hello.txt containing exactly: hello from Relay",
+        task: "Create hello.txt containing exactly: hello from ProvenWay",
       });
       expect(outcome.run.status).toBe("accepted");
     } finally {

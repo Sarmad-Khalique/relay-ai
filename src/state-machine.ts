@@ -1,4 +1,4 @@
-import { EXIT_CODES, RelayError } from "./errors.js";
+import { EXIT_CODES, ProvenWayError } from "./errors.js";
 
 export const RUN_STATUSES = [
   "created",
@@ -127,7 +127,7 @@ export function canTransition(from: RunStatus, to: RunStatus): boolean {
 
 export function assertTransition(from: RunStatus, to: RunStatus): void {
   if (!canTransition(from, to)) {
-    throw new RelayError(
+    throw new ProvenWayError(
       `Invalid run transition: ${from} -> ${to}`,
       EXIT_CODES.invalidInput,
       "INVALID_TRANSITION",

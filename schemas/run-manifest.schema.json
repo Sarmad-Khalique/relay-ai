@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://relay-ai.dev/schemas/run-manifest.schema.json",
+  "title": "RunManifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "task",
+    "status",
+    "repository_root",
+    "base_commit",
+    "final_commit",
+    "created_at",
+    "updated_at",
+    "repair_count",
+    "configuration",
+    "providers",
+    "transitions",
+    "artifacts"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "task": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "minLength": 1 },
+    "repository_root": { "type": "string", "minLength": 1 },
+    "base_commit": { "type": "string", "minLength": 7 },
+    "final_commit": { "type": ["string", "null"] },
+    "branch": { "type": "string" },
+    "worktree": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "repair_count": { "type": "integer", "minimum": 0 },
+    "configuration": { "type": "object" },
+    "providers": { "type": "object" },
+    "transitions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["from", "to", "at"],
+        "properties": {
+          "from": { "type": ["string", "null"] },
+          "to": { "type": "string" },
+          "at": { "type": "string", "format": "date-time" },
+          "detail": { "type": "string" }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "path", "sha256", "bytes", "media_type", "stage"],
+        "properties": {
+          "name": { "type": "string" },
+          "path": { "type": "string" },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "bytes": { "type": "integer", "minimum": 0 },
+          "media_type": { "type": "string" },
+          "stage": { "type": "string" }
+        }
+      }
+    }
+  }
+}

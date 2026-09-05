@@ -1,0 +1,11 @@
+version: 1
+verification:
+  discover: true
+  commands:
+    - name: TypeScript typecheck
+      argv: [pnpm, typecheck]
+      timeout_seconds: 900
+      required: true
+policy:
+  forbidden_paths:
+    - "coverage/**"

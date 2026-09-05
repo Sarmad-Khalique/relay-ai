@@ -1,0 +1,5 @@
+{"type":"system","subtype":"init","apiKeySource":"login","cwd":"/tmp/repo","session_id":"cursor-session","future_field":true}
+{"type":"tool_call","subtype":"started","call_id":"call-1","tool_call":{"writeToolCall":{"args":{"path":"feature.txt"}}},"session_id":"cursor-session"}
+{"type":"tool_call","subtype":"completed","call_id":"call-1","tool_call":{"writeToolCall":{"result":{"success":{"path":"/tmp/repo/feature.txt"}}}},"session_id":"cursor-session"}
+{"type":"future_event","payload":{"unknown":true},"session_id":"cursor-session"}
+{"type":"result","subtype":"success","is_error":false,"result":"done","session_id":"cursor-session"}

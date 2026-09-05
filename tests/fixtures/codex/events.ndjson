@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"codex-session","future_field":true}
+{"type":"item.started","item":{"type":"command_execution"}}
+{"type":"future.event","payload":{"unknown":true}}
+{"type":"turn.completed","usage":{"input_tokens":10}}

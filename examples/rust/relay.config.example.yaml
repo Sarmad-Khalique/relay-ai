@@ -1,0 +1,11 @@
+version: 1
+verification:
+  discover: true
+  commands:
+    - name: Rust tests
+      argv: [cargo, test, --locked]
+      timeout_seconds: 900
+      required: true
+policy:
+  forbidden_paths:
+    - "target/**"

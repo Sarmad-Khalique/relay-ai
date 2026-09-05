@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://relay-ai.dev/schemas/implementation-result.schema.json",
+  "title": "ImplementationResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "base_commit",
+    "final_commit",
+    "provider_session_id",
+    "process",
+    "claimed_commands",
+    "claimed_paths",
+    "acceptance_criteria_addressed",
+    "deviations",
+    "unresolved_items",
+    "relay_git"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "task_id": { "type": "string", "minLength": 1 },
+    "base_commit": { "type": "string", "minLength": 7 },
+    "final_commit": { "type": ["string", "null"] },
+    "provider_session_id": { "type": ["string", "null"] },
+    "process": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exit_code", "signal", "started_at", "finished_at", "duration_ms"],
+      "properties": {
+        "exit_code": { "type": ["integer", "null"] },
+        "signal": { "type": ["string", "null"] },
+        "started_at": { "type": "string", "format": "date-time" },
+        "finished_at": { "type": "string", "format": "date-time" },
+        "duration_ms": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "claimed_commands": { "type": "array", "items": { "type": "string" } },
+    "claimed_paths": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["changed", "created", "deleted"],
+      "properties": {
+        "changed": { "type": "array", "items": { "type": "string" } },
+        "created": { "type": "array", "items": { "type": "string" } },
+        "deleted": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "acceptance_criteria_addressed": { "type": "array", "items": { "type": "string" } },
+    "deviations": { "type": "array", "items": { "type": "string" } },
+    "unresolved_items": { "type": "array", "items": { "type": "string" } },
+    "relay_git": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["diff_sha256", "changed", "created", "deleted"],
+      "properties": {
+        "diff_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "changed": { "type": "array", "items": { "type": "string" } },
+        "created": { "type": "array", "items": { "type": "string" } },
+        "deleted": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

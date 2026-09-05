@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://relay-ai.dev/schemas/task-packet.schema.json",
+  "title": "TaskPacket",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "goal",
+    "change_required",
+    "repo_facts",
+    "constraints",
+    "acceptance_criteria",
+    "steps",
+    "required_tests",
+    "forbidden_paths",
+    "open_questions",
+    "risk_notes"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "task_id": { "type": "string", "minLength": 1 },
+    "goal": { "type": "string", "minLength": 1 },
+    "change_required": { "type": "boolean" },
+    "repo_facts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base_commit", "default_branch", "languages"],
+      "properties": {
+        "base_commit": { "type": "string", "minLength": 7 },
+        "default_branch": { "type": "string", "minLength": 1 },
+        "languages": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      }
+    },
+    "constraints": { "type": "array", "items": { "type": "string" } },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "text", "verification"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "text": { "type": "string", "minLength": 1 },
+          "verification": { "enum": ["test", "inspection", "manual"] }
+        }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "description", "likely_paths"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1 },
+          "likely_paths": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "required_tests": { "type": "array", "items": { "type": "string" } },
+    "forbidden_paths": { "type": "array", "items": { "type": "string" } },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "text", "blocking"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "text": { "type": "string", "minLength": 1 },
+          "blocking": { "type": "boolean" }
+        }
+      }
+    },
+    "risk_notes": { "type": "array", "items": { "type": "string" } }
+  }
+}

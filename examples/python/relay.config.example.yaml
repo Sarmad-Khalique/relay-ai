@@ -1,0 +1,11 @@
+version: 1
+verification:
+  discover: true
+  commands:
+    - name: Python tests
+      argv: [python, -m, pytest]
+      timeout_seconds: 900
+      required: true
+policy:
+  forbidden_paths:
+    - ".venv/**"

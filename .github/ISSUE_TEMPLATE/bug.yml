@@ -1,0 +1,32 @@
+name: Bug report
+description: Report reproducible Relay behavior that is not a security vulnerability
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Remove credentials, proprietary code, prompts, session IDs, and home-directory paths.
+  - type: input
+    id: version
+    attributes:
+      label: Relay version
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: OS, Node, Git, Codex, and Cursor versions
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true

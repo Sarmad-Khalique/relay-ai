@@ -1,0 +1,96 @@
+{
+  "name": "@relay-ai/cli",
+  "version": "0.1.0-alpha.1",
+  "description": "A local, subscription-first control plane for deterministic AI coding workflows.",
+  "homepage": "https://github.com/Sarmad-Khalique/relay-ai#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sarmad-Khalique/relay-ai.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Sarmad-Khalique/relay-ai/issues"
+  },
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@10.27.0",
+  "bin": {
+    "relay": "dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./adapter-contract": {
+      "types": "./dist/adapter-contract.d.ts",
+      "import": "./dist/adapter-contract.js"
+    },
+    "./schemas/*": "./schemas/*"
+  },
+  "files": [
+    "dist",
+    "schemas",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "scripts": {
+    "build": "pnpm generate && tsup",
+    "audit:prod": "pnpm audit --prod --audit-level high",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm schema:check && pnpm test && pnpm build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "generate": "node scripts/generate-types.mjs",
+    "lint": "eslint .",
+    "pack:smoke": "node scripts/pack-smoke.mjs",
+    "release:check": "pnpm check && pnpm audit:prod && pnpm pack:smoke",
+    "schema:check": "node scripts/check-generated.mjs",
+    "test": "vitest run --coverage",
+    "test:live": "vitest run --config vitest.live.config.ts",
+    "test:linux": "docker build -f Dockerfile.test .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.7.0",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "better-sqlite3": "^13.0.3",
+    "commander": "^15.0.0",
+    "minimatch": "^10.2.6",
+    "ulid": "^3.0.2",
+    "yaml": "^2.9.0",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.20.1",
+    "@vitest/coverage-v8": "^4.1.11",
+    "eslint": "^10.0.0",
+    "json-schema-to-typescript": "^16.0.0",
+    "prettier": "^3.9.0",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.69.0",
+    "vitest": "^4.1.11"
+  },
+  "keywords": [
+    "ai",
+    "codex",
+    "cursor",
+    "orchestration",
+    "cli",
+    "git-worktree"
+  ],
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "esbuild"
+    ]
+  }
+}

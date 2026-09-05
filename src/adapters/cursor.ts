@@ -40,7 +40,7 @@ export class CursorAdapter implements HarnessAdapter {
     let availableModels: string[] | undefined;
     if (ctx.deep) {
       const models = await captureCommand(executable, ["models"], ctx.cwd, ctx.env);
-      availableModels = parseModels(models.stdout);
+      availableModels = parseCursorModels(models.stdout);
     }
     const parsedVersion = firstLine(version.stdout || version.stderr);
     return {
@@ -227,11 +227,13 @@ function unavailable(message: string): ProviderCapabilities {
   };
 }
 
-function parseModels(value: string): string[] {
+export function parseCursorModels(value: string): string[] {
   return value
     .split("\n")
     .map((line) => line.replace(/^[-*\s]+/, "").trim())
-    .filter((line) => line && !/available models|select/i.test(line));
+    .filter((line) => line && !/available models|select/i.test(line))
+    .map((line) => line.split(/\s+-\s+/, 1)[0]?.trim() ?? "")
+    .filter(Boolean);
 }
 
 function providerFailure(stderr: string): RelayError {

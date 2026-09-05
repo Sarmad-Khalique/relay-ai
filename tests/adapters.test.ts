@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import { normalizeCodexEvent } from "../src/adapters/codex.js";
-import { normalizeCursorEvent } from "../src/adapters/cursor.js";
+import { normalizeCursorEvent, parseCursorModels } from "../src/adapters/cursor.js";
 
 describe("provider event normalization", () => {
   it("normalizes Codex fixtures and preserves unknown fields", async () => {
@@ -37,5 +37,15 @@ describe("provider event normalization", () => {
       "unknown",
     ]);
     expect(events[0]?.sessionId).toBe("cursor-session");
+  });
+
+  it("extracts Cursor model IDs without their display labels", () => {
+    expect(
+      parseCursorModels(`Available models
+
+auto - Auto (default)
+gpt-5.6-sol-high - GPT-5.6 Sol 1M High
+composer-2.5 - Composer 2.5`),
+    ).toEqual(["auto", "gpt-5.6-sol-high", "composer-2.5"]);
   });
 });

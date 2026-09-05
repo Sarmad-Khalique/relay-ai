@@ -30,9 +30,8 @@ hardened container sandbox.
 Relay defaults to subscription/account authentication and removes `OPENAI_API_KEY` and `CURSOR_API_KEY`
 from child environments. Pay-as-you-go fallback is disabled.
 
-> Maintainer validation currently uses real Codex capability checks and recorded/fake Cursor fixtures.
-> The Cursor live smoke path remains explicitly unverified until a maintainer runs the opt-in test with an
-> installed, authenticated Cursor CLI.
+> The complete live provider workflow was verified on macOS with account-authenticated Codex CLI 0.153.4
+> and Cursor Agent 2026.09.02-c22c1a3. See the [compatibility record](docs/compatibility.md).
 
 ## Install from source
 
@@ -165,7 +164,11 @@ pnpm test:linux
 Live provider smoke tests are opt-in and consume account allowance:
 
 ```bash
-RELAY_LIVE_CODEX=1 RELAY_LIVE_CURSOR=1 pnpm test:live
+RELAY_LIVE_CODEX=1 \
+RELAY_LIVE_CURSOR=1 \
+RELAY_LIVE_CODEX_MODEL="your-codex-model" \
+RELAY_LIVE_CURSOR_MODEL="your-cursor-model" \
+pnpm test:live
 ```
 
 ## License

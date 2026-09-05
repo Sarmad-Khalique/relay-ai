@@ -22,5 +22,6 @@ See Cursor's official documentation for [installation](https://cursor.com/docs/c
 [permissions](https://cursor.com/docs/cli/reference/permissions), and
 [streaming output](https://cursor.com/docs/cli/reference/output-format).
 
-The adapter has fixture-based coverage in this alpha. Its live smoke test remains maintainer-unverified
-until Cursor CLI is installed in the release environment.
+The adapter has fixture-based coverage in this alpha. The complete live workflow was also verified on
+September 5, 2026 with Cursor Agent 2026.09.02-c22c1a3 using account authentication. See the
+[compatibility record](../compatibility.md).

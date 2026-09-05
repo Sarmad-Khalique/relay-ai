@@ -19,7 +19,7 @@
     "relay_git"
   ],
   "properties": {
-    "schema_version": { "const": "1.0" },
+    "schema_version": { "type": "string", "const": "1.0" },
     "task_id": { "type": "string", "minLength": 1 },
     "base_commit": { "type": "string", "minLength": 7 },
     "final_commit": { "type": ["string", "null"] },

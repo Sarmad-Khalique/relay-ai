@@ -8,8 +8,8 @@ export interface ReviewResult {
   findings: {
     id: string;
     severity: "blocking" | "advisory";
-    path?: string;
-    line?: number;
+    path: string | null;
+    line: number | null;
     title: string;
     evidence: string;
     required_change: string;

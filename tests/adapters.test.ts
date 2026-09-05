@@ -1,6 +1,10 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
-import { normalizeCodexEvent } from "../src/adapters/codex.js";
+import {
+  codexCompatibleSchema,
+  codexErrorFromEvents,
+  normalizeCodexEvent,
+} from "../src/adapters/codex.js";
 import { normalizeCursorEvent, parseCursorModels } from "../src/adapters/cursor.js";
 
 describe("provider event normalization", () => {
@@ -19,6 +23,35 @@ describe("provider event normalization", () => {
     ]);
     expect(events[0]?.sessionId).toBe("codex-session");
     expect(events[0]?.raw).toMatchObject({ future_field: true });
+  });
+
+  it("extracts nested errors from Codex JSONL failure events", () => {
+    const event = normalizeCodexEvent(
+      JSON.stringify({
+        type: "turn.failed",
+        error: {
+          message: JSON.stringify({
+            error: { message: "Invalid structured output schema" },
+            status: 400,
+          }),
+        },
+      }),
+    );
+    expect(codexErrorFromEvents([event])).toBe("Invalid structured output schema");
+  });
+
+  it("removes JSON Schema keywords rejected by Codex while retaining canonical constraints", () => {
+    expect(
+      codexCompatibleSchema({
+        type: "object",
+        properties: {
+          values: { type: "array", uniqueItems: true, items: { type: "string" } },
+        },
+      }),
+    ).toEqual({
+      type: "object",
+      properties: { values: { type: "array", items: { type: "string" } } },
+    });
   });
 
   it("normalizes Cursor fixtures and tolerates malformed events", async () => {

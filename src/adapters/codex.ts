@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type {
   EventSink,
@@ -108,7 +108,14 @@ export class CodexAdapter implements HarnessAdapter {
       "--output-last-message",
       outputFile,
     );
-    if (!resumeSessionId && request.schemaPath) args.push("--output-schema", request.schemaPath);
+    if (!resumeSessionId && request.schemaPath) {
+      const providerSchemaPath = path.join(
+        request.logDirectory,
+        `${request.stage}.provider-output-schema.json`,
+      );
+      await writeCodexCompatibleSchema(request.schemaPath, providerSchemaPath);
+      args.push("--output-schema", providerSchemaPath);
+    }
     if (request.reasoning) args.push("-c", `model_reasoning_effort="${request.reasoning}"`);
     args.push("-C", request.cwd, "-");
 
@@ -145,7 +152,9 @@ export class CodexAdapter implements HarnessAdapter {
       throw new RelayError("Codex run cancelled", EXIT_CODES.cancelled, "CANCELLED");
     if (result.timedOut)
       throw new RelayError("Codex run timed out", EXIT_CODES.provider, "PROVIDER_TIMEOUT");
-    if (result.exitCode !== 0) throw providerFailure("Codex", result.stderr);
+    if (result.exitCode !== 0) {
+      throw providerFailure("Codex", result.stderr, codexErrorFromEvents(events));
+    }
 
     let finalText: string;
     try {
@@ -219,15 +228,16 @@ function unavailableError(): RelayError {
   return new RelayError("Codex CLI was not found", EXIT_CODES.environment, "CODEX_NOT_FOUND");
 }
 
-function providerFailure(provider: string, stderr: string): RelayError {
-  if (/quota|rate.?limit|usage.?limit/i.test(stderr)) {
+function providerFailure(provider: string, stderr: string, eventError = ""): RelayError {
+  const detail = stderr.trim() || eventError.trim() || "no error text";
+  if (/quota|rate.?limit|usage.?limit/i.test(detail)) {
     return new RelayError(
       `${provider} quota or rate limit reached`,
       EXIT_CODES.awaitingUser,
       "PROVIDER_QUOTA",
     );
   }
-  if (/auth|login|unauthorized|forbidden/i.test(stderr)) {
+  if (/auth|login|unauthorized|forbidden/i.test(detail)) {
     return new RelayError(
       `${provider} is not authenticated`,
       EXIT_CODES.environment,
@@ -235,10 +245,55 @@ function providerFailure(provider: string, stderr: string): RelayError {
     );
   }
   return new RelayError(
-    `${provider} exited unsuccessfully: ${stderr.trim() || "no error text"}`,
+    `${provider} exited unsuccessfully: ${detail}`,
     EXIT_CODES.provider,
     "PROVIDER_FAILED",
   );
+}
+
+export function codexErrorFromEvents(events: readonly NormalizedHarnessEvent[]): string {
+  for (const event of [...events].reverse()) {
+    if (!isRecord(event.raw)) continue;
+    if (typeof event.raw.message === "string") return compactProviderError(event.raw.message);
+    if (typeof event.raw.error === "string") return compactProviderError(event.raw.error);
+    if (isRecord(event.raw.error) && typeof event.raw.error.message === "string") {
+      return compactProviderError(event.raw.error.message);
+    }
+  }
+  return "";
+}
+
+function compactProviderError(value: string): string {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (isRecord(parsed) && isRecord(parsed.error) && typeof parsed.error.message === "string") {
+      return parsed.error.message;
+    }
+  } catch {
+    // The provider may emit plain text rather than a nested JSON error.
+  }
+  return value;
+}
+
+export function codexCompatibleSchema(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(codexCompatibleSchema);
+  if (!isRecord(value)) return value;
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => key !== "uniqueItems")
+      .map(([key, child]) => [key, codexCompatibleSchema(child)]),
+  );
+}
+
+async function writeCodexCompatibleSchema(
+  sourcePath: string,
+  destinationPath: string,
+): Promise<void> {
+  const source = JSON.parse(await readFile(sourcePath, "utf8")) as unknown;
+  await mkdir(path.dirname(destinationPath), { recursive: true, mode: 0o700 });
+  await writeFile(destinationPath, `${JSON.stringify(codexCompatibleSchema(source), null, 2)}\n`, {
+    mode: 0o600,
+  });
 }
 
 function authMode(output: string): "account" | "api-key" | "unknown" {

@@ -1208,6 +1208,8 @@ function withVerificationBlocker(
       {
         id: "RELAY-VERIFY",
         severity: "blocking",
+        path: null,
+        line: null,
         title: "Required verification failed",
         evidence: failed || "A required verification command did not complete successfully.",
         required_change: "Fix the implementation so every required verification command passes.",
